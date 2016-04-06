@@ -4,7 +4,7 @@ Framework for functional and Load Testing of WebRTC. Can be used to test client 
 
 ## How it works ##
 
-At the heart of webrtc-test is python script [webrtc-test](https://github.com/RestComm/webrtc-test/tools/webrtc-test.py) which sets up Restcomm for the test, spawns webrtc clients in browser tabs and starts some servers to help with the scenario, more specifically it:
+At the heart of webrtc-test is python script [webrtc-test](https://github.com/RestComm/webrtc-test/blob/master/tools/webrtc-test.py) which sets up Restcomm for the test, spawns webrtc clients in browser tabs and starts some servers to help with the scenario, more specifically it:
 * Provisions the Restcomm instance with needed Incoming Number and Restcomm Clients that will be used by the webrtc clients when registering
 * Starts up a node js http server that will serve the RCML for the Restcomm external service linked with the Incoming Number we provisioned previously. 
 * Starts up a node js http(s) server that will serve the web app to the browser tabs. This app is configured to register with restcomm and wait for webrtc calls.

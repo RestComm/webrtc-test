@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<meta name="keywords" content="JavaScript, WebRTC" />
+	<meta name="description" content="RestComm WebRTC SDK" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+	<title>RestComm Hello World</title>
+
+	<script type="text/javascript" src='scripts/adapter.js'></script>
+	<script type="text/javascript" src='scripts/jain-sip.js'></script>
+	<script type="text/javascript" src='scripts/WebRTComm.js'></script>
+	<script type="text/javascript" src='scripts/restcomm-web-client.js'></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+</head>
+<body>
+	<video id="localMedia" autoplay muted style="display: none;"></video>
+	<video id="remoteMedia" autoplay style="display: none;"></video>
+
+	<div>
+		<button id="callButton">Call</button>
+		<button id="acceptButton">Accept</button>
+		<button id="hangupButton">Hang Up</button>
+		<button id="sendButton">Send</button>
+		<button id="sendDigitsButton">Send DTMF 1</button>
+		<button id="destroyButton">Destroy</button>
+		<button id="muteIncomingButton">Mute Incoming</button>
+		<button id="ignoreIncomingButton">Ignore Incoming</button>
+		<button id="rejectIncomingButton">Reject Incoming</button>
+		<button id="muteAudioButton">Mute Audio</button>
+		<button id="unmuteAudioButton">Unmute Audio</button>
+		<button id="muteVideoButton">Mute Video</button>
+		<button id="unmuteVideoButton">Unmute Video</button>
+		<div id="log">Loading RestComm client...</div>
+	</div>
+
+	<script>
+		function getParameterByName(name, url) {
+			 if (!url) url = window.location.href;
+			 name = name.replace(/[\[\]]/g, "\\$&");
+			 var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+				  results = regex.exec(url);
+			 if (!results) return null;
+			 if (!results[2]) return '';
+			 return decodeURIComponent(results[2].replace(/\+/g, " "));
+		}
+		/*
+		function addZero(i) {
+		    if (i < 10) {
+			i = "0" + i;
+		    }
+		    return i;
+		}
+		function addZeroes(i) {
+		    if (i < 10) {
+			i = "00" + i;
+			return i;
+		    }
+		    if (i < 100) {
+			i = "0" + i;
+			return i;
+		    }
+		    return i;
+		}
+		*/
+		function clientLog(msg) {
+			//var timestamp = new Date();
+			//var timestampString = addZero(timestamp.getHours()) + ':' + addZero(timestamp.getMinutes()) + ':' + addZero(timestamp.getSeconds()) + '.' + addZeroes(timestamp.getMilliseconds());
+			console.log('webrtc-client.html(log)' + ', [user: ' + username + '] ' + msg);
+		}
+		function clientError(msg) {
+			console.error('webrtc-client.html(error)' + ', [user: ' + username + '] ' + msg);
+		}
+
+		var useVideo = false;
+		var localMedia = document.getElementById("localMedia");
+		var remoteMedia = document.getElementById("remoteMedia");
+		remoteMedia.style.display = "none";
+		var callButton = document.getElementById("callButton");
+		var acceptButton = document.getElementById("acceptButton");
+		var hangupButton = document.getElementById("hangupButton");
+		var sendButton = document.getElementById("sendButton");
+		var sendDigitsButton = document.getElementById("sendDigitsButton");
+		var destroyButton = document.getElementById("destroyButton");
+		var muteIncomingButton = document.getElementById("muteIncomingButton");
+		var ignoreIncomingButton = document.getElementById("ignoreIncomingButton");
+		var rejectIncomingButton = document.getElementById("rejectIncomingButton");
+		var muteAudioButton = document.getElementById("muteAudioButton");
+		var unmuteAudioButton = document.getElementById("unmuteAudioButton");
+		var muteVideoButton = document.getElementById("muteVideoButton");
+		var unmuteVideoButton = document.getElementById("unmuteVideoButton");
+
+		callButton.onclick = call;
+		acceptButton.onclick = accept;
+		sendButton.onclick = send;
+		hangupButton.onclick = hangup;
+		sendDigitsButton.onclick = sendDigits;
+		destroyButton.onclick = destroy;
+		muteIncomingButton.onclick = muteIncoming;
+		ignoreIncomingButton.onclick = ignoreIncoming;
+		rejectIncomingButton.onclick = rejectIncoming;
+		muteAudioButton.onclick = muteAudio;
+		unmuteAudioButton.onclick = unmuteAudio;
+		muteVideoButton.onclick = muteVideo;
+		unmuteVideoButton.onclick = unmuteVideo;
+
+		// query string: ?username=bob&password=1234
+		var username = getParameterByName('username');
+		if (!username) {
+			username = 'bob';
+		}
+		var password = getParameterByName('password');
+		if (!password) {
+			password = '1234'
+		}
+		var registerWsUrl = getParameterByName('register-ws-url');
+		if (!registerWsUrl) {
+			registerWsUrl = 'ws://127.0.0.1:5082'
+		}
+		var registerDomain = getParameterByName('register-domain');
+		if (!registerDomain) {
+			registerDomain = '127.0.0.1'
+		}
+		var respawnUrl = getParameterByName('respawn-url');
+		if (!respawnUrl) {
+			respawnUrl = 'http://127.0.0.1:10511/respawn-user'
+		}
+		var fakeMedia = getParameterByName('fake-media');
+		if (!fakeMedia) {
+			fakeMedia = false;
+		}
+		else {
+			if (fakeMedia == 'true') {
+				fakeMedia = true;
+			}
+			else {
+				fakeMedia = false;
+			}
+		}
+		// role of webrtc client: passive if auto-accepting calls, active if auto-calling
+		var role = getParameterByName('role');
+		if (!role) {
+			role = 'passive';
+		}
+		// should the client close the browser window when the call scenario ends?
+		var closeOnEnd = getParameterByName('close-on-end');
+		if (!closeOnEnd) {
+			closeOnEnd = false;
+		}
+		else {
+			if (closeOnEnd == 'true') {
+				closeOnEnd = true;
+			}
+			else {
+				closeOnEnd = false;
+			}
+		}
+		var callDestination = getParameterByName('call-destination');
+		if (!callDestination) {
+			callDestination = '+1235@127.0.0.1'
+		}
+
+		var currentConnection;
+		var parameters = {
+			'debug': true,
+			'username': username,
+			'password': password,
+		};
+
+		parameters['registrar'] = registerWsUrl;
+		parameters['domain'] = registerDomain;
+
+		if (role == 'active') {
+			parameters['register'] = false;
+		}
+
+		/*
+		if (role == 'passive') {
+			// use registrar-less mode unless we are using a passive role
+			parameters['registrar'] = registerWsUrl;
+			parameters['domain'] = registerDomain;
+		}
+		else {
+			parameters['register'] = false;
+		}
+		*/
+
+		//clientLog('Device.setup(): ' + JSON.stringify(parameters));
+		RestCommClient.Device.setup(parameters);
+
+		RestCommClient.Device.ready(function(device) {
+			clientLog('Device is ready');
+			$("#log").text("Ready");
+			if (role == 'active') {
+				// when our role is active auto-call
+				call(callDestination);
+
+				//setTimeout(function() {
+				//}, 1000);
+			}
+		});
+
+		RestCommClient.Device.error(function(error) {
+			clientError('Device error' + error);
+			$("#log").text("Error: " + error.message);
+		});
+
+		RestCommClient.Device.connect(function(connection) {
+			clientLog('Connection connected, '+ JSON.stringify(connection.parameters));
+			$("#log").text("Successfully established call");
+			remoteMedia.style.display = "block";
+		});
+
+		RestCommClient.Device.incoming(function(connection) {
+			clientLog('Call arrived, ' + JSON.stringify(connection.parameters));
+			$("#log").text("Incoming call from " + connection.parameters.From);
+			currentConnection = connection;
+			currentConnection.disconnect(function(connection) {
+				$("#log").text("Connection ended");
+
+				// print stats if available
+				if (connection.stats !== undefined) {
+					console.log('Retrieved call media stats: ' + JSON.stringify(connection.stats));
+				}
+
+				remoteMedia.style.display = "none";
+				if (closeOnEnd) {
+					// After call is finished we want to shut down Device (and see more at Device.offline())
+					RestCommClient.Device.destroy();
+				}
+			});
+
+			if (role == 'passive') {
+				// auto-accept an incoming call to be able to load-test.
+				setTimeout(function() {
+					accept();
+				}, 2000);
+			}
+		});
+
+		RestCommClient.Device.cancel(function(connection) {
+			clientLog('Call canceled' + JSON.stringify(connection.parameters));
+			$("#log").text("Incoming call is canceled");
+		});
+
+		RestCommClient.Device.offline(function(device) {
+			clientLog('Device is offline');  // + JSON.stringify(device));
+			$("#log").text("Device is offline");
+
+			if (closeOnEnd) {
+				// Send AJAX request to test tool saying that this browser if terminating
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.onreadystatechange = function() { 
+				  if (xmlHttp.readyState == 4) {
+					  if (xmlHttp.status == 200) {
+							// we got successful response back
+							clientLog('Ajax response successful for username: ' + username + ', text: ' + xmlHttp.responseText);
+						}
+						else {
+							clientError('Ajax response failed for username: ' + username + ', text: ' + xmlHttp.responseText);
+						}
+						// close the browser tab when we get a response
+						clientLog('Closing browser window');
+						close();
+					}
+				}
+				uri = respawnUrl + '?username=' + username;
+				clientLog('Using Ajax to target URI: ' + uri);
+				xmlHttp.open("GET", encodeURI(uri), true); // true for asynchronous 
+				xmlHttp.send(null);
+			}
+		});
+
+		RestCommClient.Device.message(function(parameters) {
+			$("#log").text("Incoming message from: " + parameters.From + ": " + parameters.Text);
+		});
+
+		RestCommClient.Device.disconnect(function(connection) {
+			clientLog('Device is disconnected');
+		});
+
+		function call(destination) {
+			var parameters = {
+				'username': destination,  // CHANGEME: update the IP address to your Restcomm instance 
+				'video-enabled': useVideo,
+				'local-media': localMedia,
+				'remote-media': remoteMedia,
+				'fake-media': fakeMedia,
+			};
+			clientLog('Connecting with params: ' + JSON.stringify(parameters));
+			currentConnection = RestCommClient.Device.connect(parameters);
+
+			currentConnection.disconnect(function(connection) {
+				clientLog('Connection disconnected: ' + JSON.stringify(connection.parameters));
+				$("#log").text("Connection ended");
+				remoteMedia.style.display = "none";
+
+				if (closeOnEnd) {
+					// After call is finished we want to shut down Device (and see more at Device.offline())
+					RestCommClient.Device.destroy();
+				}
+			});
+
+			currentConnection.error(function(error) {
+				clientError('Connection error: ' + JSON.stringify(error));
+				$("#log").text("Connection error: " + error);
+			});
+
+			currentConnection.mute(function(muted, connection) {
+				$("#log").text("Connection audio muted: " + muted);
+			});
+			currentConnection.muteVideo(function(muted, connection) {
+				$("#log").text("Connection video muted: " + muted);
+			});
+		}
+
+		function accept() {
+			var parameters = {
+				'video-enabled': useVideo,
+				'local-media': localMedia,
+				'remote-media': remoteMedia,
+				'fake-media': fakeMedia,
+			};
+			//clientLog('Accepting connection: ' + JSON.stringify(parameters));
+			currentConnection.accept(parameters);
+		}
+
+		function send() {
+			var parameters = {
+				'username': 'orestis@cloud.restcomm.com',
+				'message': 'Hello there!',
+			};
+			RestCommClient.Device.sendMessage(parameters);
+		}
+
+		function sendDigits() {
+			currentConnection.sendDigits('1*');
+		}
+
+		function hangup() {
+			RestCommClient.Device.disconnectAll();
+			$("#log").text("Connection ended");
+			remoteMedia.style.display = "none";
+		}
+
+		function destroy() {
+			RestCommClient.Device.destroy();
+		}
+
+		function muteIncoming() {
+			RestCommClient.Device.sounds.incoming(false);
+		}
+
+		function ignoreIncoming() {
+			RestCommClient.Device.activeConnection().ignore();
+		}
+
+		function rejectIncoming() {
+			RestCommClient.Device.activeConnection().reject();
+		}
+
+		function muteAudio() {
+			RestCommClient.Device.activeConnection().mute(true);
+		}
+
+		function unmuteAudio() {
+			RestCommClient.Device.activeConnection().mute(false);
+		}
+		function muteVideo() {
+			RestCommClient.Device.activeConnection().muteVideo(true);
+		}
+
+		function unmuteVideo() {
+			RestCommClient.Device.activeConnection().muteVideo(false);
+		}
+
+		</script>
+
+</body>
+</html>

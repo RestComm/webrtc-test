@@ -1,6 +1,6 @@
 ## Preparations ##
 
-Before starting sipp traffic you first need to start webrtc-test.py testing tool which will spawn the browsers and register webrtc client that will be the recepients of the sipp calls. Please refer to root README.md at https://github.com/RestComm/webrtc-test for more details
+Before starting sipp traffic you first need to start webrtc-test.py testing tool which will spawn the webrtc test app in the browsers and register webrtc clients that will be the recipients of the sipp calls. Please refer to root README.md at https://github.com/RestComm/webrtc-test for more details
 
 ## How to execute test ##
 

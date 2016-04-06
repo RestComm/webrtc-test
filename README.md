@@ -22,45 +22,30 @@ Once that setup is done we can then start the Sipp load scenarios found at [webr
 
 For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-test.py and sipp are all on the same host. But keep in mind that you can separate them since both Restcomm and webrtc-test.py take up a lot of resources (remember that webrtc-test can spawn a lot of browsers for testing that can be pretty resource-hungry). In this example I will be using an Ubuntu Server image in Amazon EC2, but it should work on any GNU/Linux distribution as well as OSX which we have tested as well.
 
-## First, install prerequisited ##
+## First, install prerequisites ##
 
 * Install sipp for the SIP call generation
-	* Download latest tar.gz bundle from `https://github.com/SIPp/sipp/releases`
+	* Download latest tar.gz bundle from https://github.com/SIPp/sipp/releases
 	* Install prerequisites:
 		$ sudo apt-get install ncurses-dev libpcap-dev
-	* Uncompress and configure with pcap support (so that we can RTP media as well, not only signaling) and build:
-		$ ./configure --with-pcap && make
-	* Install:
-		$ sudo make install
+	* Uncompress and configure with pcap support (so that we can RTP media as well, not only signaling) and build: `$ ./configure --with-pcap && make`
+	* Install: `$ sudo make install`
 * Install python packages (main load script is written in python)
-	* Install python package manager
-		$ sudo apt-get install python-pip
-	* Install selenium (currently it isn’t used due to some scaling issues but the dependencies in the code are still there, so please install until we decide on this)
-		$ sudo pip install selenium
+	* Install python package manager: `$ sudo apt-get install python-pip`
+	* Install selenium (currently it isn’t used due to some scaling issues but the dependencies in the code are still there, so please install until we decide on this): `$ sudo pip install selenium`
 * Install nodejs packages (http server script is in nodejs as it appears to scale better than python; with python starting more that ~30 webrtc clients caused the python web server to fail for some of them)
-	* Install nodejs
-		$ sudo apt-get install nodejs
-	* Some applications expect nodejs to be named node, so create this link:
-		$ sudo ln -s "$(which nodejs)" /usr/bin/node
-	* Install nodejs package manager:
-		$ sudo apt-get install npm
-	* Install needed nodejs modules (globally usually works best):
-		$ sudo npm -g install node-static express command-line-args
-	* Export nodejs modules path so that they can be discovered and used by nodejs (remember to add this in your profile or similar to be able to use it in future sessions):
-		$ export NODE_PATH=/usr/local/lib/node_modules
+	* Install nodejs `$ sudo apt-get install nodejs`
+	* Some applications expect nodejs to be named node, so create this link: `$ sudo ln -s "$(which nodejs)" /usr/bin/node`
+	* Install nodejs package manager: `$ sudo apt-get install npm`
+	* Install needed nodejs modules (globally usually works best): `$ sudo npm -g install node-static express command-line-args`
+	* Export nodejs modules path so that they can be discovered and used by nodejs (remember to add this in your profile or similar to be able to use it in future sessions): `$ export NODE_PATH=/usr/local/lib/node_modules`
 * Setup for headless execution
-	* Install xvfb which is a virtual window environment where apps can render on memory instead of a real screen:
-		$ sudo apt-get install xvfb
-	* Optionally install some additional fonts to avoid getting warnings in xvfb:
-		$ sudo apt-get install xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic
-	* Install firefox and chromium browsers
-		$ sudo apt-get install firefox chromium-browser
-	* Start xvfb in the background and configure it to use display 99 (randomly chosen display):
-		$ Xvfb :99 &
-* Clone webrtc-test repo that contains the load testing tools:
-	$ git clone https://github.com/RestComm/webrtc-test.git
-	Change dir to the load testing dir
-	$ cd WEBRTC-TEST/tools
+	* Install xvfb which is a virtual window environment where apps can render on memory instead of a real screen: `$ sudo apt-get install xvfb`
+	* Optionally install some additional fonts to avoid getting warnings in xvfb: `$ sudo apt-get install xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic`
+	* Install firefox and chromium browsers `$ sudo apt-get install firefox chromium-browser`
+	* Start xvfb in the background and configure it to use display 99 (randomly chosen display): `$ Xvfb :99 &`
+* Clone webrtc-test repo that contains the load testing tools: `$ git clone https://github.com/RestComm/webrtc-test.git`
+* Change dir to the load testing dir: `$ cd webrtc-test/tools`
 
 ## Then, start webrtc-test.py ##
 
@@ -103,5 +88,5 @@ Option details:
 
 ## Finally, start Sipp load tests
 
-Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number using 20 concurrent calls. Important: the number of concurrent calls should less than ‘--client-count’ passed in restcomm-test.py to give the closing browser windows time to re-spawn. I’m now using half to be able to handle 20 cps. 
+Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in restcomm-test.py to give the closing browser windows time to re-spawn. In fact it's a good practice to use half the client count for sipp concurrent calls for best results.
 

@@ -26,8 +26,7 @@ For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-t
 
 * Install sipp for the SIP call generation
 	* Download latest tar.gz bundle from https://github.com/SIPp/sipp/releases
-	* Install prerequisites:
-		$ sudo apt-get install ncurses-dev libpcap-dev
+	* Install prerequisites: `$ sudo apt-get install ncurses-dev libpcap-dev`
 	* Uncompress and configure with pcap support (so that we can RTP media as well, not only signaling) and build: `$ ./configure --with-pcap && make`
 	* Install: `$ sudo make install`
 * Install python packages (main load script is written in python)
@@ -49,7 +48,7 @@ For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-t
 
 ## Then, start webrtc-test.py ##
 
-In this example we are running the load testing tool to use 40 webrtc clients:
+In this example we are running the load testing tool to use 40 webrtc clients in headless mode in an Amazon EC2 instance:
 
 ```
 $ ./webrtc-test.py 
@@ -66,8 +65,8 @@ $ ./webrtc-test.py
 	--restcomm-external-service-url http://10.231.4.197:10512/rcml 
 	--client-browser "chromium-browser" 
 	--client-web-app-dir ../webrtc-load-tests/ 
-	--client-respawn-url https://10.231.4.197:10511/respawn-user 
 	--client-respawn 
+	--client-respawn-url https://10.231.4.197:10511/respawn-user 
 	--client-headless 
 	--client-headless-x-display ":99"
 ```
@@ -76,7 +75,7 @@ Option details:
 * **client-count** is the number of webrtc clients to handle calls (i.e. concurrent connections)
 * **client-url** is the webrtc web app URL, which will automatically register with Restcomm and be able to receive calls and auto-answer (or make in another scenario)
 * **client-register-ws-url** is the websocket URL that the webrtc web app should use for registering and general signalling with Restcomm
-* **client-register-domain** Is the domain that the webrtc web app should use when registering
+* **client-register-domain** is the domain that the webrtc web app should use when registering
 * **client-username-prefix** is the username prefix for the generated Restcomm Clients (for example if the prefix is ‘user’ and the count is 10 the generated clients will be user1-user10)
 * **client-password** is the SIP password for the webrtc clients
 * **restcomm-account-sid** is the Restcomm account sid that we use for various Restcomm REST APIs (mostly for provisioning/unprovisioning)
@@ -84,12 +83,45 @@ Option details:
 * **restcomm-base-url** is the base url for Restcomm that we use for various Restcomm REST APIs 
 * **restcomm-phone-number** is the incoming Restcomm number that we will target with our sipp script
 * **restcomm-external-service-url** is the external service URL that Restcomm will contact via GET to retrieve the RCML for the App (associated with number shown previously)
-* **client-browser** is the desired browser to use for the client. Currently supported are ‘firefox’ and ‘chrome’
-* **client-headless** should be used when we want the client to run in a headless fashion, where no real X windows environment is set and instead xvfb is set
+* **client-browser** is the desired browser to use for the client. Currently supported are Firefox and Chrome
 * **client-web-app-dir** which directory should be served over http
+* **client-respawn** switch which if provided tells the tool to use respawn logic for the browser tabs. This means that after each tab finishes handling a call will be closed and recycled
 * **client-respawn-url** the URL where the browser window will notify webrtc-test.py that it just finished with a call and will close, so that webrtc-test.py will spawn a new tab. 
+* **client-headless** switch to be used when we want the client to run in a headless fashion, where no real X windows environment is set and instead xvfb or other virtual window manager is used
+* **client-headless-x-display** when using headless, which virtual X display to use. Default is \':99\'
 
 ## Finally, start Sipp load tests
 
-Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in webrtc-test.py to give the closing browser windows time to re-spawn. In fact it's a good practice to use half the client count for sipp concurrent calls for best results.
+Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in webrtc-test.py to give the closing browser windows time to re-spawn before a new call arrives for them. In fact it's a good practice to use half the client count for sipp concurrent calls for best results, as we do here:
 
+```
+$ sudo sipp -sf webrtc-sipp-client.xml -s +5556 10.231.4.197:5080 -mi 10.231.4.197:5090 -l 20 -m 40 -r 2 -trace_screen -trace_err -recv_timeout 5000 -nr -t u1
+```
+
+The main figure to note is the `-l 20 -m 40 -r 2` portions which means 20 concurrent calls, 40 total calls, at a rate of 2 calls per second. When the test finishes we are presented with this output:
+
+```
+----------------------------- Statistics Screen ------- [1-9]: Change Screen --
+  Start Time             | 2016-04-07	09:32:01.115325	1460021521.115325         
+  Last Reset Time        | 2016-04-07	09:34:15.723558	1460021655.723558         
+  Current Time           | 2016-04-07	09:34:15.724996	1460021655.724996         
+-------------------------+---------------------------+--------------------------
+  Counter Name           | Periodic value            | Cumulative value
+-------------------------+---------------------------+--------------------------
+  Elapsed Time           | 00:00:00:001000           | 00:02:14:609000          
+  Call Rate              |    0.000 cps              |    0.297 cps             
+-------------------------+---------------------------+--------------------------
+  Incoming call created  |        0                  |        0                 
+  OutGoing call created  |        0                  |       40                 
+  Total Call created     |                           |       40                 
+  Current Call           |        0                  |                          
+-------------------------+---------------------------+--------------------------
+  Successful call        |        0                  |       40                 
+  Failed call            |        0                  |        0                 
+-------------------------+---------------------------+--------------------------
+  Response Time 1        | 00:00:00:000000           | 00:00:00:100000          
+  Call Length            | 00:00:00:000000           | 00:01:02:115000          
+------------------------------ Test Terminated --------------------------------
+```
+
+Which tells us that all calls are successful along with other interesting statistics

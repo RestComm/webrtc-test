@@ -1,6 +1,6 @@
 # webrtc-test
 
-Framework for functional and Load Testing of WebRTC. Can be used to test client and server media components utilizing WebRTC, like Media Servers, SIP clients, etc. Has been tested both in regular hosts that have a window environment as well as headless in Amazon EC2 (using Xvfb)
+Framework for functional and Load Testing of WebRTC. Can be used to test client and server media components utilizing WebRTC, like Media Servers, SIP clients, etc. Has been tested both in regular hosts that have a window environment as well as headless servers in Amazon EC2 (using Xvfb)
 
 ## How it works ##
 
@@ -52,21 +52,24 @@ For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-t
 In this example we are running the load testing tool to use 40 webrtc clients:
 
 ```
-$ ./restcomm-test.py 
+$ ./webrtc-test.py 
 	--client-count 40 
-	--client-url https://127.0.0.1:10510/webrtc-client.html 
-	--client-register-ws-url wss://127.0.0.1:5083 
-	--client-register-domain 127.0.0.1 
+	--client-url https://10.231.4.197:10510/webrtc-client.html 
+	--client-register-ws-url wss://10.231.4.197:5083 
+	--client-register-domain 10.231.4.197 
 	--client-username-prefix user 
 	--client-password 1234 
 	--restcomm-account-sid ACae6e420f425248d6a26948c17a9e2acf 
-	--restcomm-auth-token 0d01c95aac798602579fe08fc2461036  
-	--restcomm-base-url https://127.0.0.1:8443 
+	--restcomm-auth-token 3349145c827863209020dbc513c87260  
+	--restcomm-base-url https://10.231.4.197:8443 
 	--restcomm-phone-number "+5556" 
-	--restcomm-external-service-url http://127.0.0.1:10512/rcml 
+	--restcomm-external-service-url http://10.231.4.197:10512/rcml 
 	--client-browser "chromium-browser" 
 	--client-web-app-dir ../webrtc-load-tests/ 
-	--client-respawn-url https://127.0.0.1:10511/respawn-user
+	--client-respawn-url https://10.231.4.197:10511/respawn-user 
+	--client-respawn 
+	--client-headless 
+	--client-headless-x-display ":99"
 ```
 
 Option details:
@@ -84,9 +87,9 @@ Option details:
 * **client-browser** is the desired browser to use for the client. Currently supported are ‘firefox’ and ‘chrome’
 * **client-headless** should be used when we want the client to run in a headless fashion, where no real X windows environment is set and instead xvfb is set
 * **client-web-app-dir** which directory should be served over http
-* **client-respawn-url** the URL where the browser window will notify restcomm-test.py that it just finished with a call and will close, so that restcomm-test.py will spawn a new tab. 
+* **client-respawn-url** the URL where the browser window will notify webrtc-test.py that it just finished with a call and will close, so that webrtc-test.py will spawn a new tab. 
 
 ## Finally, start Sipp load tests
 
-Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in restcomm-test.py to give the closing browser windows time to re-spawn. In fact it's a good practice to use half the client count for sipp concurrent calls for best results.
+Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in webrtc-test.py to give the closing browser windows time to re-spawn. In fact it's a good practice to use half the client count for sipp concurrent calls for best results.
 

@@ -1,15 +1,9 @@
 #! /usr/bin/env python
 
-# Load testing Restcomm Media Server
-#
-# Example invocations:
-# - Secure invocation:
-# $ ./restcomm-test.py --client-count 50 --client-url https://192.168.2.3:10510/webrtc-client.html --client-register-ws-url wss://192.168.2.3:5083 --client-register-domain 192.168.2.3 --client-username-prefix user --client-password 1234 --restcomm-account-sid ACae6e420f425248d6a26948c17a9e2acf --restcomm-auth-token 0d01c95aac798602579fe08fc2461036  --restcomm-base-url https://192.168.2.3:8443 --restcomm-phone-number "+5556" --restcomm-external-service-url http://192.168.2.3:10512/rcml --client-browser "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --client-web-app-dir ../webrtc-load-tests/ --client-respawn-url https://192.168.2.3:10511/respawn-user
+# Main webrtc test tool
 #
 # TODOs:
 #
-# - Enhance this so that it also works in Linux machines. Currently it has been tested only in OSX. Some changes needed:
-#   * Browser executables reside in different places
 # - Fix the unprovisioning functionality also remove the Restcomm Clients and Restcomm Number
 # - Make accountSid and authToken not required since we have introduced the --test-modes where we can configure if we want provisioning to take place or not 
 #

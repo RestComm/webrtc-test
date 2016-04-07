@@ -22,7 +22,7 @@ Once that setup is done we can then start the Sipp load scenarios found at [webr
 
 For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-test.py and sipp are all on the same host. But keep in mind that you can separate them since both Restcomm and webrtc-test.py take up a lot of resources (remember that webrtc-test can spawn a lot of browsers for testing that can be pretty resource-hungry). In this example I will be using an Ubuntu Server image in Amazon EC2, but it should work on any GNU/Linux distribution as well as OSX which we have tested as well.
 
-## First, install prerequisites ##
+### 1. Install prerequisites ###
 
 * Install sipp for the SIP call generation
 	* Download latest tar.gz bundle from https://github.com/SIPp/sipp/releases
@@ -46,7 +46,7 @@ For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-t
 * Clone webrtc-test repo that contains the load testing tools: `$ git clone https://github.com/RestComm/webrtc-test.git`
 * Change dir to the load testing dir: `$ cd webrtc-test/tools`
 
-## Then, start webrtc-test.py ##
+### 2. Start webrtc-test.py ###
 
 In this example we are running the load testing tool to use 40 webrtc clients in headless mode in an Amazon EC2 instance:
 
@@ -90,7 +90,7 @@ Option details:
 * **client-headless** switch to be used when we want the client to run in a headless fashion, where no real X windows environment is set and instead xvfb or other virtual window manager is used
 * **client-headless-x-display** when using headless, which virtual X display to use. Default is \':99\'
 
-## Finally, start Sipp load tests
+### 3. Start Sipp load tests ###
 
 Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in webrtc-test.py to give the closing browser windows time to re-spawn before a new call arrives for them. In fact it's a good practice to use half the client count for sipp concurrent calls for best results, as we do here:
 
@@ -98,7 +98,11 @@ Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. I
 $ sudo sipp -sf webrtc-sipp-client.xml -s +5556 10.231.4.197:5080 -mi 10.231.4.197:5090 -l 20 -m 40 -r 2 -trace_screen -trace_err -recv_timeout 5000 -nr -t u1
 ```
 
-The main figure to note is the `-l 20 -m 40 -r 2` portions which means 20 concurrent calls, 40 total calls, at a rate of 2 calls per second. When the test finishes we are presented with this output:
+The main figure to note is the `-l 20 -m 40 -r 2` portion which means 20 concurrent calls, 40 total calls, at a rate of 2 calls per second. 
+
+### 4. Analyze the results ###
+
+When the Sipp test finishes we are presented with this output:
 
 ```
 ----------------------------- Statistics Screen ------- [1-9]: Change Screen --
@@ -124,4 +128,34 @@ The main figure to note is the `-l 20 -m 40 -r 2` portions which means 20 concur
 ------------------------------ Test Terminated --------------------------------
 ```
 
-Which tells us that all calls are successful along with other interesting statistics
+Which tells us that all calls are successful along with other interesting statistics. 
+
+But this isn't the full picture. We need to check the browser side too make sure that Webrtc calls from Restcomm -> browser web clients are successful. To do that we take advantage of the [restcomm-web-sdks's](https://github.com/RestComm/restcomm-web-sdk) latest addition that exposes PeerConnection getStats() to the web app. For now we don't do anything fancy in the app, just print out in the browser console the whole dictionary as returned from the SDK. Here's a sample for one of the calls (noticed that I have beautified this to be easier to see here:
+
+```
+[5551:5551:0407/091640:INFO:CONSOLE(226)] "Retrieved call media stats: {  
+   "direction":"inbound",
+   "bytes-transfered":"19092",
+   "packets-transfered":"111",
+   "output-level":"528",
+   "media-type":"audio",
+   "codec-name":"PCMA",
+   "packets-lost":"0",
+   "jitter":"0",
+   "ssrc":"3967089803"
+},
+{  
+   "direction":"outbound",
+   "bytes-transfered":"19264",
+   "packets-transfered":"112",
+   "input-level":"6435",
+   "media-type":"audio",
+   "codec-name":"PCMA",
+   "packets-lost":"-1",
+   "jitter":"-1",
+   "ssrc":"3854772780"
+}", ...
+```
+
+The fact that we see bytes transfered and no packets lost in both directions is a pretty good indication that things went well. Another indication is the input-level and output-level, but as far as I know these are only available in Chrome. Remember that all calls from Restcomm -> web app are audio-only, which is why you only see audio 'media-type' in the getStats() results.
+

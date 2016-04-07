@@ -11,7 +11,7 @@ At the heart of webrtc-test is python script [webrtc-test](https://github.com/Re
 * Starts up a python http(s) server that will serve wait for re-spawn Ajax requests from the web app. That is, each browser tab when finished with the phone call from Restcomm it notifies webrtc-test.py that it's done and closes. Once webrtc-test.py receives that requests it respawns a browser tab for the same user (this is a way to workaround an issue where after some calls browser tabs performance would degrade)
 * Spawn as many browser tabs as requested targeting the webrtc web app, using a separate username for each to register with Restcomm (from the pool provisioned previously)
 
-Once that setup is done we can then start the Sipp load scenarios found at [webrtc-load-tests](https://github.com/RestComm/webrtc-test/webrtc-load-tests) towards Restcomm Incoming Number and play a 1-minute media stream. For each call this is what happens:
+Once that setup is done we can then start the Sipp load scenarios found at [webrtc-load-tests](https://github.com/RestComm/webrtc-test/webrtc-load-tests) towards Restcomm Incoming Number and play a 1-minute media stream. Notice that you can use any tool you like to generate traffic towards Restcomm; we are using Sipp as an example. For each call this is what happens:
 * Restcomm receives the call and contacts the external service to see what to do with it
 * External service return RCML that instructs Restcomm to call the next available webrtc client and bridge the 2 calls
 * Webrtc client running in the browser tab receives the call from Restcomm and hears the 1-minute media stream sent by Sipp. At the same time it sends dummy media stream back
@@ -24,7 +24,7 @@ For sake of brevity we 'll go over the simple case where both Restcomm, webrtc-t
 
 ### 1. Install prerequisites ###
 
-* Install sipp for the SIP call generation
+* Install sipp for the SIP call generation (as already mentioned we are using Sipp for this example, but you can use any tool you like to generate calls)
 	* Download latest tar.gz bundle from https://github.com/SIPp/sipp/releases
 	* Install prerequisites: `$ sudo apt-get install ncurses-dev libpcap-dev`
 	* Uncompress and configure with pcap support (so that we can RTP media as well, not only signaling) and build: `$ ./configure --with-pcap && make`
@@ -81,7 +81,7 @@ Option details:
 * **restcomm-account-sid** is the Restcomm account sid that we use for various Restcomm REST APIs (mostly for provisioning/unprovisioning)
 * **restcomm-auth-token** is the Restcomm auth token that we use for various Restcomm REST APIs 
 * **restcomm-base-url** is the base url for Restcomm that we use for various Restcomm REST APIs 
-* **restcomm-phone-number** is the incoming Restcomm number that we will target with our sipp script
+* **restcomm-phone-number** is the incoming Restcomm number that we will target with our traffic generator (in this case Sipp)
 * **restcomm-external-service-url** is the external service URL that Restcomm will contact via GET to retrieve the RCML for the App (associated with number shown previously)
 * **client-browser** is the desired browser to use for the client. Currently supported are Firefox and Chrome
 * **client-web-app-dir** which directory should be served over http
@@ -90,9 +90,9 @@ Option details:
 * **client-headless** switch to be used when we want the client to run in a headless fashion, where no real X windows environment is set and instead xvfb or other virtual window manager is used
 * **client-headless-x-display** when using headless, which virtual X display to use. Default is \':99\'
 
-### 3. Start Sipp load tests ###
+### 3. Initiate load tests ###
 
-Run sipp to create the actual SIP traffic towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in webrtc-test.py to give the closing browser windows time to re-spawn before a new call arrives for them. In fact it's a good practice to use half the client count for sipp concurrent calls for best results, as we do here:
+Although you can use any tool you like to generate call traffic towards Restcomm, we are using Sipp as an example. What we do is use Sipp to create calls towards ‘+5556’ Restcomm number. In this example we are setting up sipp to use 20 concurrent calls. Important: the number of concurrent calls should be less than ‘--client-count’ passed in webrtc-test.py to give the closing browser windows time to re-spawn before a new call arrives for them. In fact it's a good practice to use half the client count for sipp concurrent calls for best results, as we do here:
 
 ```
 $ sudo sipp -sf webrtc-sipp-client.xml -s +5556 10.231.4.197:5080 -mi 10.231.4.197:5090 -l 20 -m 40 -r 2 -trace_screen -trace_err -recv_timeout 5000 -nr -t u1

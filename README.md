@@ -159,3 +159,8 @@ But this isn't the full picture. We need to check the browser side too make sure
 
 The fact that we see bytes transfered and no packets lost in both directions is a pretty good indication that things went well. Another indication is the input-level and output-level, but as far as I know these are only available in Chrome. Remember that all calls from Restcomm -> web app are audio-only, which is why you only see audio 'media-type' in the getStats() results.
 
+As always, feel free to jump in and play with the code and get your hands dirty. There's a list of [open issues](https://github.com/RestComm/webrtc-test/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) that you can start with, or you can suggest your own enhancements. If you have any questions please post at the [Restcomm forum](https://groups.google.com/forum/#!forum/restcomm) or in Stackoverflow using tag 'restcomm'.
+
+
+
+For frequently asked questions, please refer to the [FAQ](https://github.com/RestComm/webrtc-test/wiki/FAQ)

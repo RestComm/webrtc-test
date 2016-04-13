@@ -481,8 +481,8 @@ for i in range(1, args.count + 1):
 	if args.respawn:
 		GETData['respawn-url'] = args.respawnUrl;
 		GETData['close-on-end'] = 'true';
-	if args.clientRole == 'active':
-		GETData['call-destination'] = args.clientTargetUri;
+	#if args.clientRole == 'active':
+	GETData['call-destination'] = args.clientTargetUri;
 	
 	clients.append({ 
 		'id': GETData['username'], 

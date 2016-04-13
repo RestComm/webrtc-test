@@ -196,7 +196,7 @@
 			$("#log").text("Ready");
 			if (role == 'active') {
 				// when our role is active auto-call
-				call(callDestination);
+				call();
 
 				//setTimeout(function() {
 				//}, 1000);
@@ -282,9 +282,9 @@
 			clientLog('Device is disconnected');
 		});
 
-		function call(destination) {
+		function call() {
 			var parameters = {
-				'username': destination,  // CHANGEME: update the IP address to your Restcomm instance 
+				'username': callDestination,  // CHANGEME: update the IP address to your Restcomm instance 
 				'video-enabled': useVideo,
 				'local-media': localMedia,
 				'remote-media': remoteMedia,

@@ -322,7 +322,7 @@ def spawnBrowsers(browserCommand, clients, totalBrowserCount, logIndex, headless
 		envDictionary = dict(os.environ)   
 		# Set the chrome log file
 		#envDictionary['NSPR_LOG_FILE'] = 'browser#' + str(client['id']) + '.log'
-		envDictionary['NSPR_LOG_FILE'] = 'firefox.log'
+		envDictionary['NSPR_LOG_FILE'] = 'firefox.log.' + str(logIndex)
 		# not sure why but this is the 'module' name for the web console and '5' to get all levels
 		envDictionary['NSPR_LOG_MODULES'] = 'timestamp,textrun:5'
 		#envDictionary['NSPR_LOG_MODULES'] = 'timestamp,all:3'

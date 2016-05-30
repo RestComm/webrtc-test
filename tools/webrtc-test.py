@@ -312,6 +312,12 @@ def spawnBrowsers(browserCommand, clients, totalBrowserCount, logIndex, headless
 			#'--vmodule=webrtc-client*',  # not tested
 			'--use-fake-ui-for-media-stream',  # don't require user to grant permission for microphone and camera
 			'--use-fake-device-for-media-stream',  # don't use real microphone and camera for media, but generate fake media
+			# Didn't work (no idea why):
+			#'--use-file-for-fake-audio-capture=../resources/wav/audio_long16.wav',  # use specified wave file for fake audio instead of default beeping sound
+			# Didn't work:
+			#'--use-file-for-fake-audio-capture=' + os.getcwd().rstrip() + '/../resources/wav/audio_long16.wav',  # use specified wave file for fake audio instead of default beeping sound
+			# Worked:
+			'--use-file-for-fake-audio-capture=/home/ubuntu/Downloads/webrtc-test/resources/wav/audio_long16.wav',  # use specified wave file for fake audio instead of default beeping sound
 			'--ignore-certificate-errors',  # don't check server certificate for validity, again to avoid user intervention
 			#'--process-per-tab',  # not tested
 		]

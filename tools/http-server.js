@@ -94,7 +94,7 @@ app.get('/rcml', function (req, res) {
 	var rcml = ''
 	if (options['client-role'] == 'passive') {
 		// when webrtc client is passive the RCML should be active and make calls towards it
-		rcml = '<?xml version="1.0" encoding="UTF-8"?><Response> <Dial record="false"> <Client>' + options['external-service-client-prefix'];
+		rcml = '<?xml version="1.0" encoding="UTF-8"?><Response> <Dial record="true"> <Client>' + options['external-service-client-prefix'];
 		rcml += id; 
 		rcml += '</Client> </Dial> </Response>';
 

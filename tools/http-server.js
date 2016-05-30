@@ -30,6 +30,7 @@ var cli = commandLineArgs([
   { name: 'web-app-port', alias: 'w', type: Number, defaultValue: 10510 },
   { name: 'web-app-dir', alias: 'd', type: String, defaultValue: '.' },
   { name: 'secure-web-app', alias: 's', type: Boolean, defaultValue: false },
+  { name: 'record-media', alias: 'm', type: Boolean, defaultValue: false },
   { name: 'client-role', alias: 'r', type: String, defaultValue: 'passive' },
   { name: 'help', alias: 'h' },
 ]);
@@ -60,7 +61,7 @@ if (process.argv[5]) {
 */
 
 //console.log('[server.js] Initializing http(s) server with ' + options[' + ' clients: \n\tRCML (REST) port: ' + RCML_PORT + ' \n\thttp (Webrtc App) port: ' + HTTP_PORT + ' \n\thttps (Webrtc App) port: ' + HTTPS_PORT);	
-console.log(TAG + 'External service settings: \n\tclient count: ' + options['client-count'] + '\n\tport: ' + options['external-service-port'] + '\n\tclient prefix: ' + options['external-service-client-prefix'] + '\n\tclient role: ' + options['client-role']);
+console.log(TAG + 'External service settings: \n\tclient count: ' + options['client-count'] + '\n\tport: ' + options['external-service-port'] + '\n\tclient prefix: ' + options['external-service-client-prefix'] + '\n\tclient role: ' + options['client-role'] + '\n\trecord media: ' + options['record-media']);
 console.log(TAG + 'Web app server settings: \n\tport: ' + options['web-app-port'] + '\n\tsecure: ' + options['secure-web-app'] + '\n\tserving contents of: ' + options['web-app-dir']);
 
 // -- Serve html pages over http
@@ -94,7 +95,15 @@ app.get('/rcml', function (req, res) {
 	var rcml = ''
 	if (options['client-role'] == 'passive') {
 		// when webrtc client is passive the RCML should be active and make calls towards it
-		rcml = '<?xml version="1.0" encoding="UTF-8"?><Response> <Dial record="false"> <Client>' + options['external-service-client-prefix'];
+		//rcml = '<?xml version="1.0" encoding="UTF-8"?><Response> <Say>Welcome to RestComm, a TeleStax sponsored project.</Say></Response>';
+		rcml = '<?xml version="1.0" encoding="UTF-8"?><Response> <Dial '; 
+		if (options['record-media']) {
+			rcml += 'record="true"';
+		}
+		else {
+			rcml += 'record="false"';
+		}
+		rcml += '> <Client>' + options['external-service-client-prefix'];
 		rcml += id; 
 		rcml += '</Client> </Dial> </Response>';
 

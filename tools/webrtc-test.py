@@ -187,7 +187,7 @@ def provisionClients(count, accountSid, authToken, restcommUrl, usernamePrefix, 
 		#subprocess.call(cmd.split(), stdout = devnullFile, stderr = devnullFile)
 		subprocess.call(cmd.split())
 
-def startServer(count, clientUrl, externalServiceUrl, usernamePrefix, clientWebAppDir, clientRole): 
+def startServer(count, clientUrl, externalServiceUrl, usernamePrefix, clientWebAppDir, clientRole, recordMedia): 
 	print TAG + 'Starting http server to handle both http/https request for the webrtc-client web page, and RCML REST requests from Restcomm'
 
 	externalServicePort = '80'
@@ -204,12 +204,16 @@ def startServer(count, clientUrl, externalServiceUrl, usernamePrefix, clientWebA
 	if clientParsedUrl.scheme == 'https':
 		secureArg = '--secure-web-app'
 	
+	recordMediaArg = ''
+	if recordMedia:
+		recordMediaArg = '--record-media'
+	
 	# Make a copy of the current environment
 	envDictionary = dict(os.environ)   
 	# Add the nodejs path, as it isn't found when we run as root
 	envDictionary['NODE_PATH'] = '/usr/local/lib/node_modules'
 	#cmd = 'server.js ' + str(count) + ' 10512 10510 10511'
-	cmd = 'node http-server.js --client-count ' + str(count) + ' --external-service-port ' + str(externalServicePort) + ' --external-service-client-prefix ' + usernamePrefix + ' --web-app-port ' + str(webAppPort) + ' ' + secureArg + ' --web-app-dir ' + clientWebAppDir + ' --client-role ' + clientRole
+	cmd = 'node http-server.js --client-count ' + str(count) + ' --external-service-port ' + str(externalServicePort) + ' --external-service-client-prefix ' + usernamePrefix + ' --web-app-port ' + str(webAppPort) + ' ' + secureArg + ' --web-app-dir ' + clientWebAppDir + ' --client-role ' + clientRole + ' ' + recordMediaArg;
 	# We want it to run in the background
 	#os.system(cmd)
 	#subprocess.call(cmd.split(), env = envDictionary)
@@ -247,7 +251,7 @@ def globalSetup(dictionary):
 	# if user asked for http server to be started  (i.e. testModes = 010 binary)
 	if testModes & 2:
 		# Start the unified server script to serve both RCML (REST) and html page for webrtc clients to connect to
-		startServer(dictionary['count'], dictionary['client-url'], dictionary['external-service-url'], dictionary['username-prefix'], dictionary['client-web-app-dir'], dictionary['client-role'])
+		startServer(dictionary['count'], dictionary['client-url'], dictionary['external-service-url'], dictionary['username-prefix'], dictionary['client-web-app-dir'], dictionary['client-role'], dictionary['record-media'])
 
 def globalTeardown(dictionary): 
 	print TAG + "Tearing down tests"
@@ -444,6 +448,7 @@ parser.add_argument('--restcomm-account-sid', dest = 'accountSid', required = Tr
 parser.add_argument('--restcomm-auth-token', dest = 'authToken', required = True, help = 'Restcomm auth token, like \'0a01c34aac72a432579fe08fc2461036\'')
 parser.add_argument('--restcomm-phone-number', dest = 'phoneNumber', default = '+5556', help = 'Restcomm phone number to provision and link with external service, like \'+5556\'')
 parser.add_argument('--restcomm-external-service-url', dest = 'externalServiceUrl', default = 'http://127.0.0.1:10512/rcml', help = 'External service URL for Restcomm to get RCML from, like \'http://127.0.0.1:10512/rcml\'')
+parser.add_argument('--restcomm-record-media', dest = 'recordMedia', action = 'store_true', default = False, help = 'Should Restcomm create recordings for the calls? Default \'false\'')
 parser.add_argument('--test-modes', dest = 'testModes', default = 7, type = int, help = 'Testing modes for the load test. Which parts of the tool do we want to run? Provisioning, HTTP server, client browsers or any combination of those. This is a bitmap where binary 001 (i.e. 1) means to do provisioning unprovisioning, binary 010 (i.e. 2) means start HTTP(S) server and binary 100 (i.e. 4) means to spawn webrtb browsers. Default is binary 111 (i.e. 7) which means to do all the above')
 parser.add_argument('--version', action = 'version', version = 'restcomm-test.py ' + VERSION)
 
@@ -471,6 +476,7 @@ globalSetup({
 	'external-service-url': args.externalServiceUrl,
 	'client-web-app-dir': args.clientWebAppDir,
 	'client-role': args.clientRole,
+	'record-media': args.recordMedia,
 })
 
 # Populate a list with browser thread ids and URLs for each client thread that will be spawned

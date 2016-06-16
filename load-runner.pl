@@ -23,7 +23,8 @@ my $sippConcurrentCalls = "10";
 my $sippTotalCalls = "10000";
 my $sippCallsPerSecond = "1";
 my $cleanupBeforeRun = 1;
-my $cleanupOnly = 0;
+my $eraseLogsOnly = 0;
+my $shutdownOnly = 0;
 my $restcommEnableRecording = 0;
 
 # prints out a short usage for the tool
@@ -133,7 +134,8 @@ my $result = GetOptions("client-count|c=s" => \$clientCount,
 			"sipp-total-calls=s" => \$sippTotalCalls,
 			"sipp-calls-per-second=s" => \$sippCallsPerSecond,
 			"cleanup-before-run=i" => \$cleanupBeforeRun,
-			"cleanup-only=i" => \$cleanupOnly,
+			"erase-logs-only=i" => \$eraseLogsOnly,
+			"shutdown-only=i" => \$shutdownOnly,
 			"help|h" => sub { printUsage(); exit 1; });
 
 if (!$result) {
@@ -141,12 +143,19 @@ if (!$result) {
 	exit 1;
 }
 
-if ($cleanupBeforeRun || $cleanupOnly) {
+if ($eraseLogsOnly) {
+	cleanupFiles();
+	exit 0;
+}
+
+if ($shutdownOnly) {
+	killProcesses();
+	exit 0;
+}
+
+if ($cleanupBeforeRun) {
 	killProcesses();
 	cleanupFiles();
-	if ($cleanupOnly) {
-		exit 0;
-	}
 }
 
 startXvfb();

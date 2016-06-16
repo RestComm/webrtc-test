@@ -84,7 +84,7 @@ sub waitForClients
 {
 	my $counter = 0;
 	while ($counter < 30) {
-		my $currentCount = qx(cd tools; cat *.log* | grep "WebRTCommClient:open" | wc -l);
+		my $currentCount = qx(cd tools; cat *.log* | grep "\] Device is ready" | wc -l);
 		chomp($currentCount);
 		if ($currentCount eq $clientCount) {
 			print "[load-runner] All clients are registered: " . $currentCount . "/" . $clientCount . "\n";
